@@ -35,7 +35,7 @@ var UserSchema = new mongoose.Schema({
 
 // adds as instance method
 // gets called with the individual document
-UserSchema.methods.toJSON = function() {
+UserSchema.methods.toJSON = function () {
 	var user = this;
 	var userObjects = user.toObject();
 
@@ -46,11 +46,19 @@ UserSchema.methods.generateAuthToken = function () {
 	var user = this;
 	var access = 'auth';
 	var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
-	
-	user.tokens = [];
+
 	user.tokens.push({ access, token });
 	return user.save().then(() => {
 		return token;
+	});
+}
+
+UserSchema.methods.removeToken = function (token) {
+	var user = this;
+	return user.updateOne({
+		$pull: {
+			tokens: { token }
+		}
 	});
 }
 
@@ -76,7 +84,7 @@ UserSchema.statics.findByToken = function (token) {
 UserSchema.statics.findByCredentials = function (email, password) {
 	var User = this;
 
-	return User.findOne({email}).then((user) => {
+	return User.findOne({ email }).then((user) => {
 		if (!user)
 			return Promise.reject();
 
